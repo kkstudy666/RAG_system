@@ -1154,6 +1154,19 @@ def initialize_app():
                         restored_info = load_doc_info()
                         if restored_info:
                             st.session_state.doc_info_list = restored_info
+                        else:
+                            # 旧版本没有 doc_info.json，生成占位条目
+                            # 下次重新上传文档后会自动更新为完整信息
+                            st.session_state.doc_info_list = [
+                                {
+                                    "name": "（历史文档 — 重新上传后显示详细信息）",
+                                    "hash": "legacy",
+                                    "type": "unknown",
+                                    "chunks": index.ntotal,
+                                    "size_kb": 0,
+                                    "time": "未知",
+                                }
+                            ]
 
                         # 重建 QA 链
                         llm_provider = st.session_state.get("llm_provider_select", "ollama")
