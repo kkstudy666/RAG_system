@@ -274,13 +274,24 @@ def load_single_document(file_path: str, file_type: str) -> List[Document]:
         loader = loader_class(file_path)
     documents = loader.load()
 
-    # 为每个文档添加元数据（源文件名）
+    # 过滤掉空页面（扫描版 PDF 等无法提取文本的页面）
     source_name = Path(file_path).name
+    valid_docs = []
     for doc in documents:
-        doc.metadata["source"] = source_name
-        doc.metadata["file_type"] = file_type
+        text = doc.page_content.strip()
+        if text:
+            doc.metadata["source"] = source_name
+            doc.metadata["file_type"] = file_type
+            valid_docs.append(doc)
 
-    return documents
+    if not valid_docs:
+        raise ValueError(
+            f"文档 '{source_name}' 无法提取文本内容。"
+            f"可能原因：1) PDF 为扫描版/图片型，需 OCR 识别；"
+            f"2) DOCX 内容为嵌入图片；3) 文件损坏或加密"
+        )
+
+    return valid_docs
 
 
 def process_uploaded_files(
@@ -760,7 +771,13 @@ def process_documents_action(uploaded_files):
             )
 
             if not all_chunks:
-                st.error("没有成功处理的文档，请检查文件格式")
+                st.error(
+                    "没有成功处理的文档。可能原因：\n\n"
+                    "1) PDF 为扫描版/图片型（需 OCR 识别）\n"
+                    "2) DOCX 内容为嵌入图片而非文本\n"
+                    "3) 文件损坏或加密\n\n"
+                    "请检查上方具体文件的错误信息，或上传包含可选文本的文档。"
+                )
                 st.session_state.processing = False
                 return
 
