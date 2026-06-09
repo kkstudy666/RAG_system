@@ -825,7 +825,7 @@ def render_main_area():
                                 f"""<div class="source-box">
                                 <div class="title">📎 来源 {i}: {source.get('source', '未知')}</div>
                                 <div class="content">{source.get('content', '')[:500]}</div>
-                                <div class="meta">相关度: {source.get('score', 0):.4f}</div>
+                                <div class="meta">相关度: {(source.get('score') or 0):.4f}</div>
                                 </div>""",
                                 unsafe_allow_html=True,
                             )
