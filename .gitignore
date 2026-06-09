@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 项目数据文件
+vector_store/
+uploaded_files/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+
+# 缓存
+.cache/
+*.cache
+
+# 模型文件（过大，不提交）
+models/
+*.bin
+*.safetensors
+*.pkl
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+Thumbs.db
+Desktop.ini
