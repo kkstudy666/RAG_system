@@ -171,6 +171,7 @@ st.markdown(
 # ============================================================================
 VECTOR_STORE_PATH = Path("./vector_store")
 UPLOAD_DIR = Path("./uploaded_files")
+DOC_INFO_FILE = VECTOR_STORE_PATH / "doc_info.json"  # 文档元信息持久化文件
 VECTOR_STORE_PATH.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -483,6 +484,26 @@ def process_uploaded_files(
     status_text.empty()
 
     return all_chunks, doc_info_list
+
+
+def save_doc_info(doc_info_list: List[Dict[str, Any]]):
+    """将文档信息列表持久化为 JSON 文件，重启后可恢复显示"""
+    import json
+    DOC_INFO_FILE.write_text(
+        json.dumps(doc_info_list, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def load_doc_info() -> List[Dict[str, Any]]:
+    """从磁盘加载之前持久化的文档信息列表"""
+    import json
+    if not DOC_INFO_FILE.exists():
+        return []
+    try:
+        return json.loads(DOC_INFO_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return []
 
 
 @st.cache_resource(show_spinner=False)
@@ -926,6 +947,9 @@ def process_documents_action(uploaded_files):
             st.session_state.documents_processed = True
             st.session_state.processing = False
 
+            # 持久化文档信息，重启后可恢复已加载文档列表
+            save_doc_info(st.session_state.doc_info_list)
+
             # 构建 QA 链
             rebuild_qa_chain(llm_provider, vector_store)
 
@@ -1125,6 +1149,11 @@ def initialize_app():
                         # 统计信息
                         index = vector_store.index
                         st.session_state.chunk_count = index.ntotal
+
+                        # 恢复上次加载的文档信息列表
+                        restored_info = load_doc_info()
+                        if restored_info:
+                            st.session_state.doc_info_list = restored_info
 
                         # 重建 QA 链
                         llm_provider = st.session_state.get("llm_provider_select", "ollama")
