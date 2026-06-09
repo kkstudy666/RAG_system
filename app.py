@@ -8,8 +8,13 @@ Author: RAG System
 Version: 1.0.0
 """
 
-import streamlit as st
+# ============================================================================
+# 国内用户使用 HuggingFace 镜像站，解决网络无法访问问题
+# ============================================================================
 import os
+os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+
+import streamlit as st
 import tempfile
 import hashlib
 import time
