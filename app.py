@@ -268,7 +268,10 @@ def load_single_document(file_path: str, file_type: str) -> List[Document]:
     if loader_class is None:
         raise ValueError(f"不支持的文件类型: {file_type}")
 
-    loader = loader_class(file_path)
+    if file_type in ("txt", "md"):
+        loader = loader_class(file_path, encoding="utf-8", autodetect_encoding=True)
+    else:
+        loader = loader_class(file_path)
     documents = loader.load()
 
     # 为每个文档添加元数据（源文件名）
