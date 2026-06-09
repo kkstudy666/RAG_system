@@ -255,6 +255,94 @@ def detect_file_type(filename: str) -> str:
     return type_map.get(ext, "unknown")
 
 
+@st.cache_resource(show_spinner=False)
+def _get_ocr_reader() -> Any:
+    """
+    获取 RapidOCR 实例（使用缓存避免重复加载 ONNX 模型）
+
+    Returns:
+        RapidOCR 实例，如果 rapidocr 未安装则返回 None
+    """
+    try:
+        from rapidocr_onnxruntime import RapidOCR
+        return RapidOCR()
+    except ImportError:
+        return None
+
+
+def _ocr_pdf_document(file_path: str, source_name: str) -> List[Document]:
+    """
+    使用 OCR 处理扫描版 PDF（当常规文本提取失败时的回退方案）
+
+    使用 pymupdf 将每页渲染为图片，再用 RapidOCR 识别文字。
+
+    Args:
+        file_path: PDF 文件路径
+        source_name: 源文件名（用于元数据）
+
+    Returns:
+        Document 对象列表，每个对象包含一页的 OCR 识别文本
+
+    Raises:
+        ImportError: 缺少必要的 OCR 依赖
+        ValueError: OCR 也未识别到任何文本
+    """
+    import fitz
+    import numpy as np
+
+    reader = _get_ocr_reader()
+    if reader is None:
+        raise ImportError(
+            "OCR 功能需要安装 rapidocr-onnxruntime 和 pymupdf。\n"
+            "请运行: pip install rapidocr-onnxruntime pymupdf"
+        )
+
+    documents = []
+    pdf_doc = fitz.open(file_path)
+    total_pages = len(pdf_doc)
+
+    try:
+        for page_idx in range(total_pages):
+            page = pdf_doc[page_idx]
+            # 渲染页面为图片（150 DPI，平衡速度与精度）
+            pix = page.get_pixmap(dpi=150)
+            img = np.frombuffer(
+                pix.samples, dtype=np.uint8
+            ).reshape(pix.height, pix.width, pix.n)
+
+            # OCR 识别
+            results, _ = reader(img)
+
+            if results:
+                # 按阅读顺序拼接文本（从上到下）
+                # results 已按 y 坐标排序
+                texts = [r[1] for r in results if r[2] >= 0.3]
+                page_text = "\n".join(texts).strip()
+
+                if page_text:
+                    documents.append(
+                        Document(
+                            page_content=page_text,
+                            metadata={
+                                "source": source_name,
+                                "file_type": "pdf",
+                                "page": page_idx + 1,
+                                "ocr_method": "rapidocr",
+                            }
+                        )
+                    )
+    finally:
+        pdf_doc.close()
+
+    if not documents:
+        raise ValueError(
+            f"文档 '{source_name}' OCR 识别后仍未提取到文本。"
+            f"可能原因：1) 图片质量过低；2) 文档为空白页；3) 文件损坏"
+        )
+
+    return documents
+
+
 def load_single_document(file_path: str, file_type: str) -> List[Document]:
     """加载单个文档并返回 LangChain Document 对象列表"""
     loaders = {
@@ -285,9 +373,24 @@ def load_single_document(file_path: str, file_type: str) -> List[Document]:
             valid_docs.append(doc)
 
     if not valid_docs:
+        # PDF 文件：常规提取失败时尝试 OCR 回退
+        if file_type == "pdf":
+            st.warning(f"📄 '{source_name}' 常规文本提取为空，正在尝试 OCR 识别...")
+            try:
+                ocr_docs = _ocr_pdf_document(file_path, source_name)
+                if ocr_docs:
+                    st.success(f"✅ OCR 识别成功：从 '{source_name}' 提取了 {len(ocr_docs)} 页文本")
+                    return ocr_docs
+            except ImportError as e:
+                raise ValueError(
+                    f"文档 '{source_name}' 为扫描版 PDF（无可选文本），"
+                    f"且 OCR 依赖未安装。请运行:\n"
+                    f"pip install rapidocr-onnxruntime pymupdf"
+                ) from e
+        # PDF OCR 也失败，或非 PDF 文件
         raise ValueError(
-            f"文档 '{source_name}' 无法提取文本内容。"
-            f"可能原因：1) PDF 为扫描版/图片型，需 OCR 识别；"
+            f"文档 '{source_name}' 无法提取文本内容。\n"
+            f"可能原因：1) PDF 为扫描版/图片型，需 OCR 识别（已尝试但失败）；"
             f"2) DOCX 内容为嵌入图片；3) 文件损坏或加密"
         )
 
