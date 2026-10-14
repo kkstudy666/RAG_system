@@ -182,7 +182,20 @@ streamlit run app.py
 
 ```
 RAG_system/
-├── app.py                  # 主应用程序
+├── app.py                  # 主入口：页面配置 + 初始化 + 编排
+├── app_backup.py           # 重构前的单文件版本备份
+├── config.py               # 全局配置（路径 / 模型选项 / 提示词 / CSS）
+├── state.py                # 会话状态管理、flash 提示、LLM 配置签名
+├── actions.py              # 业务动作（处理文档 / 清空知识库 / 处理提问）
+├── core/                   # 核心数据与模型层
+│   ├── documents.py        # 文档加载、OCR 识别、文本分块
+│   ├── storage.py          # 文档元信息与嵌入模型的 JSON 持久化
+│   ├── embeddings.py       # 嵌入模型加载与模型名反查
+│   ├── vector_store.py     # FAISS 向量库创建 / 追加 / 加载
+│   └── llm.py              # LLM 获取与 RAG QA 链构建
+├── ui/                     # 界面层
+│   ├── sidebar.py          # 侧边栏（文档上传、模型配置）
+│   └── main_area.py        # 主内容区（聊天对话、引用来源）
 ├── requirements.txt        # Python 依赖
 ├── README.md               # 项目文档
 ├── .gitignore              # Git 忽略规则

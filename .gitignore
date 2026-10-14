@@ -30,6 +30,9 @@ venv.bak/
 vector_store/
 uploaded_files/
 
+# 重构前的单文件备份（仅本地保留，不提交）
+app_backup.py
+
 # Jupyter Notebook
 .ipynb_checkpoints/
 
