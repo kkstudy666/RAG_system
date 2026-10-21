@@ -1,0 +1,28 @@
+# RAG 知识库系统 —— 一键部署编排
+# 使用方式：docker compose up -d --build
+services:
+  backend:
+    build: ./backend
+    container_name: rag-backend
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-rag-system-dev-secret-change-me-please-set-in-production}
+      - JWT_EXPIRE_MINUTES=${JWT_EXPIRE_MINUTES:-1440}
+      - HF_ENDPOINT=https://hf-mirror.com
+    volumes:
+      - ./backend/data:/app/data            # 数据库、向量库、日志、备份持久化
+      - hf-cache:/root/.cache/huggingface   # 嵌入/重排模型缓存持久化
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: rag-frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
