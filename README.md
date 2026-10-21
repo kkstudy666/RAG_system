@@ -78,8 +78,7 @@ RAG_system/
 ├── frontend/           # Vue 3 前端（views · components · stores · api）
 ├── docs/               # 架构说明 / 部署文档 / 测试报告
 ├── docker-compose.yml  # 一键部署编排
-├── .env.example
-└── legacy_streamlit/   # 归档的旧版 Streamlit 实现
+└── .env.example
 ```
 
 ## 📖 文档
@@ -88,14 +87,12 @@ RAG_system/
 - [部署文档](docs/deploy.md) —— Docker 部署、本地运行、备份恢复、常见问题
 - [问答效果测试报告](docs/eval_report.md) —— 评测方法、指标口径、预期效果
 
-## 🧪 评测与迁移
+## 🧪 评测
 
 ```bash
 cd backend
 # 检索效果评测（对比优化前后命中率）
 python scripts/eval.py --kb-id 1 --testset tests.json --top-k 4
-# 旧版 Streamlit 向量库迁移（可选）
-python scripts/migrate_legacy.py
 ```
 
 ## 📄 许可证

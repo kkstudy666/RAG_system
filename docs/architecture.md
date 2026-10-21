@@ -46,7 +46,7 @@ RAG_system/
 │   │   ├── api/                 # 路由：auth/kb/documents/chat/system
 │   │   ├── core/                # 核心：chunking/rerank/query_rewrite/vector_store/...
 │   │   └── services/            # 业务编排：doc/kb/chat_service
-│   ├── scripts/                 # eval.py 评测 / migrate_legacy.py 迁移
+│   ├── scripts/                 # eval.py 评测 / smoke_test.py 冒烟测试
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/                    # Vue 3 前端
@@ -57,8 +57,7 @@ RAG_system/
 │   └── Dockerfile
 ├── docs/                        # 架构 / 部署 / 测试报告
 ├── docker-compose.yml
-├── .env.example
-└── legacy_streamlit/            # 归档的旧版 Streamlit 实现
+└── .env.example
 ```
 
 ## 3. 检索增强流水线（核心）
